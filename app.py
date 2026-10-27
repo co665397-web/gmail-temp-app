@@ -8,8 +8,8 @@ from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 
 # --- CẤU HÌNH TÀI KHOẢN GMAIL GỐC ---
-GMAIL_USER = "co665397@gmail.com"
-GMAIL_APP_PASSWORD = "fihw aqmy uixk iujr"
+GMAIL_USER = "vinhvuive12312@gmail.com"
+GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
 IMAP_SERVER = "imap.gmail.com"
 
 # Biến lưu trữ email biến thể hiện tại (mặc định lấy email gốc)
