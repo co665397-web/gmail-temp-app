@@ -1,4 +1,4 @@
-﻿import email
+import email
 import imaplib
 import random
 import re
@@ -7,13 +7,13 @@ from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-# --- CẤU HÌNH TÀI KHOẢN GMAIL GỐC ---
+# --- CẤU HÌNH TÀI KHOẢN GMAIL MỚI ---
 GMAIL_USER = "vinhvuive12312@gmail.com"
 GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
 IMAP_SERVER = "imap.gmail.com"
 
-# Biến lưu trữ email biến thể hiện tại (mặc định lấy email gốc)
-current_alias_prefix = "co665397"
+# Tiền tố email biến thể dựa trên tài khoản mới
+current_alias_prefix = "vinhvuive12312"
 
 
 @app.route("/")
@@ -29,17 +29,16 @@ def get_email():
 
 @app.route("/api/change-email", methods=["POST"])
 def change_email():
-  """Tạo ra một email biến thể mới hoàn toàn không trùng lặp"""
+  """Tạo ra một email biến thể mới không trùng lặp dựa trên tài khoản mới"""
   global current_alias_prefix
-  # Tạo chuỗi ngẫu nhiên dựa trên thời gian/số ngẫu nhiên (ví dụ: co665397+vmos8274@gmail.com)
   rand_num = random.randint(1000, 9999)
-  current_alias_prefix = f"co665397+vmos{rand_num}"
+  current_alias_prefix = f"vinhvuive12312+vmos{rand_num}"
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
 @app.route("/api/messages", methods=["GET"])
 def get_messages():
-  """Kết nối IMAP vào Gmail gốc để lấy danh sách thư"""
+  """Kết nối IMAP vào Gmail mới để lấy danh sách thư"""
   try:
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(GMAIL_USER, GMAIL_APP_PASSWORD.replace(" ", ""))
@@ -83,7 +82,7 @@ def get_messages():
 
 @app.route("/api/read", methods=["GET"])
 def read_message():
-  """Đọc nội dung chi tiết, lọc sạch thẻ HTML, style, script để lấy văn bản thô"""
+  """Đọc nội dung chi tiết, lọc sạch thẻ HTML, style, script"""
   msg_id = request.args.get("id")
   if not msg_id:
     return jsonify({"error": "Thiếu ID thư"}), 400
@@ -129,7 +128,6 @@ def read_message():
 
     mail.logout()
 
-    # Lọc sạch thẻ HTML, script, style rác
     clean_text = re.sub(
         r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
         "",
