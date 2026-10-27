@@ -7,13 +7,20 @@ from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-# --- CẤU HÌNH TÀI KHOẢN GMAIL MỚI ---
+# --- CẤU HÌNH TÀI KHOẢN GMAIL GỐC ---
 GMAIL_USER = "vinhvuive12312@gmail.com"
 GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
 IMAP_SERVER = "imap.gmail.com"
 
-# Tiền tố email biến thể dựa trên tài khoản mới
-current_alias_prefix = "vinhvuive12312"
+
+# Hàm tạo alias ngẫu nhiên độc nhất (tránh trùng lặp hoàn toàn)
+def generate_unique_alias():
+  rand_num = random.randint(100000, 999999)
+  return f"vinhvuive12312+vmos{rand_num}"
+
+
+# Khởi tạo ngay một email ngẫu nhiên ngay khi vừa mở app (Không dùng mail gốc)
+current_alias_prefix = generate_unique_alias()
 
 
 @app.route("/")
@@ -23,22 +30,21 @@ def index():
 
 @app.route("/api/get-email", methods=["GET"])
 def get_email():
-  """Trả về email hiện tại đang dùng"""
+  """Trả về email ảo hiện tại"""
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
 @app.route("/api/change-email", methods=["POST"])
 def change_email():
-  """Tạo ra một email biến thể mới không trùng lặp dựa trên tài khoản mới"""
+  """Đổi sang một email ảo hoàn toàn mới, không trùng lặp"""
   global current_alias_prefix
-  rand_num = random.randint(1000, 9999)
-  current_alias_prefix = f"vinhvuive12312+vmos{rand_num}"
+  current_alias_prefix = generate_unique_alias()
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
 @app.route("/api/messages", methods=["GET"])
 def get_messages():
-  """Kết nối IMAP vào Gmail mới để lấy danh sách thư"""
+  """Quét hộp thư đến qua IMAP cực nhanh"""
   try:
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(GMAIL_USER, GMAIL_APP_PASSWORD.replace(" ", ""))
@@ -49,7 +55,7 @@ def get_messages():
       return jsonify([])
 
     mail_ids = messages[0].split()
-    recent_ids = mail_ids[-10:][::-1]
+    recent_ids = mail_ids[-15:][::-1]  # Lấy 15 thư mới nhất
 
     message_list = []
     for num in recent_ids:
@@ -82,7 +88,7 @@ def get_messages():
 
 @app.route("/api/read", methods=["GET"])
 def read_message():
-  """Đọc nội dung chi tiết, lọc sạch thẻ HTML, style, script"""
+  """Đọc chi tiết nội dung thư, lọc sạch mã độc và HTML rườm rà"""
   msg_id = request.args.get("id")
   if not msg_id:
     return jsonify({"error": "Thiếu ID thư"}), 400
@@ -128,6 +134,7 @@ def read_message():
 
     mail.logout()
 
+    # Lọc sạch thẻ rác để lấy mã OTP hoặc nội dung rõ ràng nhất
     clean_text = re.sub(
         r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
         "",
