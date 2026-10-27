@@ -7,20 +7,12 @@ from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-# --- CẤU HÌNH TÀI KHOẢN GMAIL GỐC ---
 GMAIL_USER = "vinhvuive12312@gmail.com"
 GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
 IMAP_SERVER = "imap.gmail.com"
 
-
-# Hàm tạo alias ngẫu nhiên độc nhất (tránh trùng lặp hoàn toàn)
-def generate_unique_alias():
-  rand_num = random.randint(100000, 999999)
-  return f"vinhvuive12312+vmos{rand_num}"
-
-
-# Khởi tạo ngay một email ngẫu nhiên ngay khi vừa mở app (Không dùng mail gốc)
-current_alias_prefix = generate_unique_alias()
+# Biến toàn cục lưu trữ alias hiện tại
+current_alias_prefix = f"vinhvuive12312+vmos{random.randint(100000, 999999)}"
 
 
 @app.route("/")
@@ -30,21 +22,19 @@ def index():
 
 @app.route("/api/get-email", methods=["GET"])
 def get_email():
-  """Trả về email ảo hiện tại"""
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
 @app.route("/api/change-email", methods=["POST"])
 def change_email():
-  """Đổi sang một email ảo hoàn toàn mới, không trùng lặp"""
   global current_alias_prefix
-  current_alias_prefix = generate_unique_alias()
+  current_alias_prefix = f"vinhvuive12312+vmos{random.randint(100000, 999999)}"
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
 @app.route("/api/messages", methods=["GET"])
 def get_messages():
-  """Quét hộp thư đến qua IMAP cực nhanh"""
+  """Quét nhanh 5 thư mới nhất để giảm độ trễ tối đa"""
   try:
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
     mail.login(GMAIL_USER, GMAIL_APP_PASSWORD.replace(" ", ""))
@@ -52,14 +42,15 @@ def get_messages():
 
     status, messages = mail.search(None, "ALL")
     if status != "OK":
+      mail.logout()
       return jsonify([])
 
     mail_ids = messages[0].split()
-    recent_ids = mail_ids[-15:][::-1]  # Lấy 15 thư mới nhất
+    recent_ids = mail_ids[-5:][::-1]  # Chỉ lấy 5 thư mới nhất để tăng tốc độ phản hồi
 
     message_list = []
     for num in recent_ids:
-      status, msg_data = mail.fetch(num, "(RFC822)")
+      status, msg_data = mail.fetch(num, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])")
       if status != "OK":
         continue
 
@@ -88,7 +79,6 @@ def get_messages():
 
 @app.route("/api/read", methods=["GET"])
 def read_message():
-  """Đọc chi tiết nội dung thư, lọc sạch mã độc và HTML rườm rà"""
   msg_id = request.args.get("id")
   if not msg_id:
     return jsonify({"error": "Thiếu ID thư"}), 400
@@ -100,13 +90,13 @@ def read_message():
 
     status, msg_data = mail.fetch(msg_id.encode(), "(RFC822)")
     if status != "OK":
+      mail.logout()
       return jsonify({"error": "Không tìm thấy thư"}), 404
 
     raw_html_or_text = ""
     for response_part in msg_data:
       if isinstance(response_part, tuple):
         msg = email.message_from_bytes(response_part[1])
-
         if msg.is_multipart():
           for part in msg.walk():
             if part.get_content_type() in ["text/plain", "text/html"]:
@@ -114,13 +104,9 @@ def read_message():
               if payload:
                 charset = part.get_content_charset() or "utf-8"
                 try:
-                  raw_html_or_text += (
-                      payload.decode(charset, errors="ignore") + "\n"
-                  )
+                  raw_html_or_text += payload.decode(charset, errors="ignore") + "\n"
                 except:
-                  raw_html_or_text += (
-                      payload.decode("latin-1", errors="ignore") + "\n"
-                  )
+                  raw_html_or_text += payload.decode("latin-1", errors="ignore") + "\n"
         else:
           payload = msg.get_payload(decode=True)
           if payload:
@@ -134,19 +120,8 @@ def read_message():
 
     mail.logout()
 
-    # Lọc sạch thẻ rác để lấy mã OTP hoặc nội dung rõ ràng nhất
-    clean_text = re.sub(
-        r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
-        "",
-        raw_html_or_text,
-        flags=re.IGNORECASE,
-    )
-    clean_text = re.sub(
-        r"<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>",
-        "",
-        clean_text,
-        flags=re.IGNORECASE,
-    )
+    clean_text = re.sub(r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>", "", raw_html_or_text, flags=re.IGNORECASE)
+    clean_text = re.sub(r"<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>", "", clean_text, flags=re.IGNORECASE)
     clean_text = re.sub(r"<[^>]+>", "", clean_text)
     clean_text = re.sub(r"[ \t]+", " ", clean_text)
     clean_text = re.sub(r"\n\s*\n", "\n\n", clean_text).strip()
