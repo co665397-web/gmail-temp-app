@@ -1,60 +1,132 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gmail IMAP Reader</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-slate-100 min-h-screen text-slate-800 font-sans flex flex-col">
+<script>
+        // Đặt mặc định đếm ngược là 5 giây
+        let countdown = 5;
+        let autoRefreshTimer = null;
+        let activeMsgId = null;
 
-    <header class="bg-red-600 text-white shadow-md">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-brands fa-google text-2xl text-amber-300"></i>
-                <h1 class="text-xl font-bold tracking-wide">Gmail IMAP Reader</h1>
-            </div>
-            <div class="text-xs bg-red-700 text-red-200 px-3 py-1.5 rounded-full flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                Connected
-            </div>
-        </div>
-    </header>
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchEmail();
+            checkMessages(true);
+            startAutoRefresh();
+        });
 
-    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div class="md:col-span-5 space-y-6">
-            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-at text-red-500"></i> Địa chỉ Email Nhận Thư
-                </h2>
-                <div class="flex items-center gap-2 mb-3">
-                    <input type="text" id="emailInput" readonly 
-                           class="w-full bg-slate-50 text-slate-800 font-mono font-medium text-sm px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none select-all" 
-                           value="Đang kết nối...">
-                    <button onclick="copyEmail()" title="Sao chép"
-                            class="bg-red-600 hover:bg-red-700 text-white p-2.5 rounded-lg font-medium transition flex items-center justify-center min-w-[42px]">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
-                <button onclick="changeEmailAlias()" 
-                        class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-2 border border-slate-200">
-                    <i class="fa-solid fa-shuffle text-red-500"></i> Đổi email mới (Không trùng)
-                </button>
-            </div>
+        async function fetchEmail() {
+            try {
+                const res = await fetch('/api/get-email');
+                const data = await res.json();
+                document.getElementById('emailInput').value = data.email;
+            } catch (err) {
+                console.error(err);
+            }
+        }
 
-            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex items-center justify-between">
-                <div>
-                    <h3 class="text-sm font-semibold text-slate-700">Tự động làm mới</h3>
-                    <!-- Đã đổi hiển thị thành 5s -->
-                    <p class="text-xs text-slate-500">Kiểm tra thư sau <span id="timerText" class="font-bold text-red-600">5</span>s</p>
-                </div>
-                <button onclick="checkMessages(true)" 
-                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2">
-                    <i class="fa-solid fa-rotate" id="refreshIcon"></i> Làm mới
-                </button>
-            </div>
-        </div>
+        async function changeEmailAlias() {
+            try {
+                const res = await fetch('/api/change-email', { method: 'POST' });
+                const data = await res.json();
+                document.getElementById('emailInput').value = data.email;
+                showToast("Đã đổi sang email mới thành công!");
+                closeDetail();
+                checkMessages(false);
+            } catch (err) {
+                showToast("Lỗi đổi email!");
+            }
+        }
 
-        <div class="md:col-span-7 space-y-6">
-            <div
+        function copyEmail() {
+            navigator.clipboard.writeText(document.getElementById('emailInput').value);
+            showToast("Đã sao chép email!");
+        }
+
+        async function checkMessages(showLoading = false) {
+            const listContainer = document.getElementById('messagesList');
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+            if (showLoading && listContainer) {
+                listContainer.innerHTML = `<div class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl text-red-500 mb-2"></i><p class="text-xs">Đang quét thư...</p></div>`;
+            }
+
+            try {
+                const res = await fetch('/api/messages');
+                const messages = await res.json();
+                const msgCountElem = document.getElementById('msgCount');
+                if (msgCountElem) msgCountElem.innerText = messages.length;
+
+                if (listContainer) {
+                    if (messages.length === 0) {
+                        listContainer.innerHTML = `<div class="p-8 text-center text-slate-400"><i class="fa-regular fa-folder-open text-3xl mb-2"></i><p class="text-xs">Hộp thư trống.</p></div>`;
+                    } else {
+                        listContainer.innerHTML = '';
+                        messages.forEach(msg => {
+                            const item = document.createElement('div');
+                            item.className = `p-3.5 hover:bg-slate-50 cursor-pointer transition flex justify-between items-center ${activeMsgId === msg.id ? 'bg-red-50/60 border-l-4 border-red-600' : ''}`;
+                            item.onclick = () => readMessage(msg.id, msg.subject, msg.from);
+                            item.innerHTML = `
+                                <div class="overflow-hidden pr-2">
+                                    <p class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(msg.from)}</p>
+                                    <p class="text-xs text-slate-600 truncate font-medium mt-0.5">${escapeHtml(msg.subject)}</p>
+                                </div>
+                                <span class="text-[10px] text-slate-400 whitespace-nowrap">${msg.date ? msg.date.slice(0, 16) : ''}</span>
+                            `;
+                            listContainer.appendChild(item);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            } finally { 
+                if (refreshIcon) refreshIcon.classList.remove('fa-spin'); 
+            }
+        }
+
+        async function readMessage(id, subject, from) {
+            activeMsgId = id;
+            document.getElementById('detailBox').classList.remove('hidden');
+            document.getElementById('detailSubject').innerText = subject;
+            document.getElementById('detailFrom').innerText = from;
+            document.getElementById('mailContentBox').value = "Đang tải nội dung văn bản...";
+            checkMessages(false);
+
+            try {
+                const res = await fetch(`/api/read?id=${id}`);
+                const data = await res.json();
+                document.getElementById('mailContentBox').value = data.rawText || "Không có nội dung";
+            } catch (err) { 
+                document.getElementById('mailContentBox').value = "Lỗi tải nội dung thư!";
+            }
+        }
+
+        function closeDetail() {
+            document.getElementById('detailBox').classList.add('hidden');
+            activeMsgId = null;
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+                countdown--;
+                const timerText = document.getElementById('timerText');
+                if (timerText) timerText.innerText = countdown;
+                if (countdown <= 0) { 
+                    countdown = 5; 
+                    checkMessages(false); 
+                }
+            }, 1000);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            if (toast && toastMsg) {
+                toastMsg.innerText = message;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
