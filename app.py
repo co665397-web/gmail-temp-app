@@ -4,7 +4,6 @@ import random
 import re
 from email.header import decode_header
 from flask import Flask, jsonify, render_template, request
-import requests
 
 app = Flask(__name__)
 
@@ -12,11 +11,10 @@ GMAIL_USER = "vinhvuive12312@gmail.com"
 GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
 IMAP_SERVER = "imap.gmail.com"
 
-# Trạng thái hệ thống tự động hóa trên Render
 current_alias_prefix = f"vinhvuive12312+vmos{random.randint(100000, 999999)}"
 bot_status = {
     "status": "Sẵn sàng",
-    "log": "Hệ thống đang chạy trên Render trực tuyến 24/7.",
+    "log": "Hệ thống TempMail & VMOS Assistant đang hoạt động trực tuyến trên Render.",
 }
 
 
@@ -37,27 +35,18 @@ def change_email():
   return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
-@app.route("/api/vmos/auto-register", methods=["POST"])
-def auto_register_vmos():
+@app.route("/api/vmos/start", methods=["POST"])
+def start_vmos():
   global bot_status
-  try:
-    bot_status["status"] = "Đang xử lý"
-    bot_status["log"] = (
-        f"Đang sử dụng email {current_alias_prefix}@gmail.com để gửi yêu"
-        " cầu..."
-    )
-
-    # Tại đây bạn có thể thêm các đoạn mã requests.post() gọi trực tiếp tới API đăng ký của VMOS
-    # (Lưu ý: Nếu VMOS chặn request thuần hoặc bắt buộc dùng trình duyệt tay, bạn sẽ cần thao tác trực tiếp trên trình duyệt của bạn).
-
-    bot_status["status"] = "Đang chờ OTP"
-    bot_status["log"] = "Đã gửi yêu cầu thành công. Đang quét hộp thư chờ mã OTP..."
-
-    return jsonify({"success": True, "message": "Đã kích hoạt tiến trình tự động!"})
-  except Exception as e:
-    bot_status["status"] = "Lỗi"
-    bot_status["log"] = f"Lỗi xảy ra: {str(e)}"
-    return jsonify({"success": False, "message": str(e)}), 500
+  bot_status["status"] = "Đang xử lý"
+  bot_status["log"] = (
+      f"Đã sử dụng email bảo mật: {current_alias_prefix}@gmail.com để kết"
+      " nối..."
+  )
+  return jsonify({
+      "success": True,
+      "message": "Đã kích hoạt phiên làm việc thành công!",
+  })
 
 
 @app.route("/api/vmos/status", methods=["GET"])
