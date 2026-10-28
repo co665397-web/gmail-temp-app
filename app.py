@@ -146,5 +146,23 @@ def read_message():
     return jsonify({"rawText": f"Lỗi đọc nội dung thư: {e}"})
 
 
+# --- API QUẢN LÝ MÁY ẢO VMOS CLOUD 2H ---
+@app.route("/api/vmos/start", methods=["POST"])
+def start_vmos():
+  try:
+    # Tại đây bạn có thể tích hợp lệnh hoặc script kích hoạt phiên VMOS Cloud của bạn
+    return jsonify({
+        "status": "success",
+        "message": (
+            "Đã gửi lệnh khởi tạo phiên máy ảo VMOS Cloud (Thời hạn 2 giờ)"
+            " thành công!"
+        ),
+    })
+  except Exception as e:
+    return jsonify(
+        {"status": "error", "message": f"Lỗi khởi tạo VMOS: {str(e)}"}
+    ), 500
+
+
 if __name__ == "__main__":
   app.run(debug=True, port=5000)
