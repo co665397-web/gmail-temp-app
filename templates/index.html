@@ -3,128 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VMOS Cloud Manager (2h)</title>
+    <title>VMOS Automation Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-slate-100 font-sans flex flex-col items-center justify-center p-4">
+<body class="bg-slate-900 min-h-screen text-slate-100 font-sans flex items-center justify-center p-4">
 
-    <div class="max-w-md w-full bg-slate-800/80 backdrop-blur rounded-2xl p-6 shadow-2xl border border-slate-700/50 space-y-6">
-        
-        <!-- Tiêu đề -->
-        <div class="flex items-center space-x-3 border-b border-slate-700/50 pb-4">
-            <div class="bg-cyan-600 p-3 rounded-xl shadow-lg shadow-cyan-600/30">
-                <i class="fa-solid fa-mobile-screen-button text-white text-xl"></i>
+    <div class="max-w-lg w-full bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-6">
+        <div class="flex items-center space-x-3 border-b border-slate-700 pb-4">
+            <div class="bg-red-600 p-3 rounded-xl shadow-lg">
+                <i class="fa-solid fa-robot text-white text-xl"></i>
             </div>
             <div>
-                <h1 class="text-base font-bold tracking-wide text-white">VMOS Cloud Manager</h1>
-                <p class="text-xs text-slate-400">Hệ thống tạo và giám sát máy ảo 2 giờ</p>
+                <h1 class="text-base font-bold text-white">Trạm Điều Khởi VMOS Automation</h1>
+                <p class="text-xs text-slate-400">Tự động lấy email từ Render & Điều khiển trình duyệt</p>
             </div>
         </div>
 
-        <!-- Bảng báo trạng thái -->
-        <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-700 space-y-3 shadow-inner">
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400">Trạng thái:</span>
-                <span id="statusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Đang kiểm tra...</span>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Đường dẫn trang VMOS mục tiêu:</label>
+                <input type="text" id="targetUrl" value="https://www.vmoscloud.com/" 
+                       class="w-full bg-slate-900 text-xs px-3.5 py-3 rounded-xl border border-slate-700 text-slate-200 focus:outline-none">
             </div>
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400">Mã phiên (ID):</span>
-                <span id="instanceIdText" class="text-xs font-mono font-semibold text-slate-200">---</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400">Thời gian tạo:</span>
-                <span id="createdText" class="text-xs font-mono text-slate-300">---</span>
-            </div>
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400">Thời hạn hết hiệu lực:</span>
-                <span id="expiresText" class="text-xs font-mono text-cyan-400 font-semibold">---</span>
-            </div>
-        </div>
 
-        <!-- Các nút điều khiển -->
-        <div class="space-y-3">
-            <button onclick="startVmos()" 
-                    class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
-                <i class="fa-solid fa-play"></i> Tạo phiên máy ảo VMOS (2 Giờ)
-            </button>
-            <button onclick="stopVmos()" 
-                    class="w-full bg-slate-700/60 hover:bg-rose-600/30 hover:border-rose-500/50 hover:text-rose-400 text-slate-300 text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 border border-slate-600">
-                <i class="fa-solid fa-stop"></i> Dừng phiên hiện tại
+            <button onclick="startAutomation()" id="startBtn"
+                    class="w-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> Bắt đầu tiến trình tự động
             </button>
         </div>
-    </div>
 
-    <!-- Toast thông báo -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-slate-700 text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2.5 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-        <span id="toastMsg">Thông báo</span>
+        <div class="bg-slate-900 rounded-xl p-4 border border-slate-700 space-y-2">
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-400">Email hiện tại:</span>
+                <span id="currentEmail" class="text-xs font-mono text-red-400 font-semibold">---</span>
+            </div>
+            <div>
+                <span class="text-xs text-slate-400 block mb-1">Nhật ký hoạt động (Logs):</span>
+                <div id="logBox" class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-emerald-400 h-28 overflow-y-auto border border-slate-800">
+                    Đang chờ khởi chạy...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Tự động tải trạng thái khi mở trang
         window.addEventListener('DOMContentLoaded', () => {
-            fetchStatus();
-            setInterval(fetchStatus, 5000); // Tự động cập nhật trạng thái mỗi 5 giây
+            setInterval(fetchStatus, 2000);
         });
+
+        async function startAutomation() {
+            let url = document.getElementById('targetUrl').value;
+            let res = await fetch('/api/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            });
+            let data = await res.json();
+            alert(data.message);
+        }
 
         async function fetchStatus() {
             try {
-                let res = await fetch('/api/vmos/status');
+                let res = await fetch('/api/status');
                 let data = await res.json();
-                updateUI(data);
-            } catch (err) {}
-        }
-
-        async function startVmos() {
-            try {
-                showToast("Đang khởi tạo máy ảo VMOS Cloud...");
-                let res = await fetch('/api/vmos/start', { method: 'POST' });
-                let data = await res.json();
-                showToast(data.message);
-                fetchStatus();
-            } catch (err) {
-                showToast("Lỗi kết nối tới máy chủ!");
-            }
-        }
-
-        async function stopVmos() {
-            try {
-                let res = await fetch('/api/vmos/stop', { method: 'POST' });
-                let data = await res.json();
-                showToast(data.message);
-                fetchStatus();
-            } catch (err) {
-                showToast("Lỗi kết nối!");
-            }
-        }
-
-        function updateUI(data) {
-            let badge = document.getElementById('statusBadge');
-            let idText = document.getElementById('instanceIdText');
-            let createdText = document.getElementById('createdText');
-            let expiresText = document.getElementById('expiresText');
-
-            badge.innerText = data.status;
-            idText.innerText = data.instance_id || "---";
-            createdText.innerText = data.created_at || "---";
-            expiresText.innerText = data.expires_str || "---";
-
-            if (data.status === "Đang chạy") {
-                badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-            } else {
-                badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20";
-            }
-        }
-
-        function showToast(message) {
-            let toast = document.getElementById('toast');
-            let toastMsg = document.getElementById('toastMsg');
-            if (toast && toastMsg) {
-                toastMsg.innerText = message;
-                toast.classList.remove('translate-y-20', 'opacity-0');
-                setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-            }
+                document.getElementById('currentEmail').innerText = data.email || "---";
+                let logBox = document.getElementById('logBox');
+                if(logBox.innerText !== data.log) {
+                    logBox.innerText = data.log;
+                    logBox.scrollTop = logBox.scrollHeight;
+                }
+            } catch(e) {}
         }
     </script>
 </body>
