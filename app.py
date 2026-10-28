@@ -1,96 +1,96 @@
+import threading
 import time
 import requests
+from flask import Flask, jsonify, render_template, request
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.options import Options
 
-# Địa chỉ trang web TempMail Cloud của bạn trên Render
+app = Flask(__name__)
+
+# Địa chỉ web TempMail Cloud của bạn trên Render
 RENDER_API_BASE = "https://gmail-temp-app.onrender.com"
 
+# Biến toàn cục lưu trạng thái tiến trình
+automation_status = {
+    "running": False,
+    "log": "Hệ thống sẵn sàng.",
+    "email": "",
+}
 
-def get_new_temp_email():
-  """Lấy một địa chỉ email tạm thời mới từ web Render của bạn"""
+
+def run_automation_task(target_url):
+  global automation_status
+  automation_status["running"] = True
+  automation_status["log"] = "Đang lấy email tạm thời từ Render..."
+
   try:
-    response = requests.post(f"{RENDER_API_BASE}/api/change-email")
-    data = response.json()
-    email = data.get("email")
-    print(f"[+] Đã tạo và lấy email thành công: {email}")
-    return email
+    # 1. Lấy email từ Render
+    res = requests.post(f"{RENDER_API_BASE}/api/change-email")
+    email = res.json().get("email")
+    automation_status["email"] = email
+    automation_status["log"] = f"Đã nhận email: {email}. Đang mở trình duyệt..."
+
+    # 2. Khởi động Selenium Chrome
+    options = Options()
+    # options.add_argument("--headless") # Bỏ chú thích nếu muốn chạy ẩn không hiện cửa sổ Chrome
+    driver = webdriver.Chrome(options=options)
+
+    try:
+      automation_status["log"] = f"Đang truy cập: {target_url}"
+      driver.get(target_url)
+
+      # Tại đây bạn có thể thêm code Selenium để tìm ô input email và điền biến `email` vào
+      # Ví dụ:
+      # email_input = driver.find_element("id", "email_input_id")
+      # email_input.send_keys(email)
+
+      automation_status["log"] = (
+          "Đã điền email thành công! Đang chờ bạn xử lý Captcha hoặc nhận OTP..."
+      )
+
+      # Giữ trình duyệt mở một thời gian để thao tác thủ công phần Captcha
+      time.sleep(60)
+
+    finally:
+      driver.quit()
+      automation_status["log"] = "Đã hoàn tất phiên tự động hóa."
   except Exception as e:
-    print(f"[-] Lỗi khi gọi API lấy email: {e}")
-    return None
+    automation_status["log"] = f"Lỗi: {str(e)}"
+  finally:
+    automation_status["running"] = False
 
 
-def get_latest_otp_or_content():
-  """Quét hộp thư trên Render để lấy nội dung mã OTP"""
-  try:
-    response = requests.get(f"{RENDER_API_BASE}/api/messages")
-    messages = response.json()
-    if messages and len(messages) > 0:
-      latest_msg = messages[0]
-      msg_id = latest_msg["id"]
-      subject = latest_msg["subject"]
-      print(f"[+] Tìm thấy thư mới: {subject}")
-
-      # Đọc nội dung chi tiết thư
-      detail_res = requests.get(f"{RENDER_API_BASE}/api/read?id={msg_id}")
-      content = detail_res.json().get("rawText", "")
-      return content
-  except Exception as e:
-    print(f"[-] Lỗi quét hộp thư: {e}")
-  return None
+@app.route("/")
+def index():
+  return render_template("index.html")
 
 
-def run_vmos_automation():
-  # 1. Lấy email tạm thời từ hệ thống Render
-  email = get_new_temp_email()
-  if not email:
-    return
+@app.route("/api/status", methods=["GET"])
+def get_status():
+  return jsonify(automation_status)
 
-  # 2. Khởi động trình duyệt tự động trên máy tính
-  options = webdriver.ChromeOptions()
-  # Bỏ dòng dưới đây nếu bạn muốn nhìn thấy trình duyệt thao tác trực tiếp trên màn hình
-  # options.add_argument("--headless")
 
-  driver = webdriver.Chrome(options=options)
-
-  try:
-    print("[*] Đang truy cập trang đăng ký VMOS...")
-    driver.get(
-        "https://www.vmoscloud.com/"
-    )  # Thay thế bằng đường dẫn trang đăng ký thực tế của VMOS
-
-    # --- KHU VỰC ĐIỀN THÔNG TIN TỰ ĐỘNG ---
-    # Ví dụ: Chờ ô nhập email xuất hiện và điền email tạm thời vào
-    # wait = WebDriverWait(driver, 15)
-    # email_input = wait.until(EC.presence_of_element_located((By.ID, "email-input-field-id")))
-    # email_input.send_keys(email)
-
-    print(
-        "[*] Đã điền email. Đang chờ bạn xử lý captcha kéo trượt (nếu có) hoặc"
-        " chờ mã OTP gửi tới..."
+@app.route("/api/start", methods=["POST"])
+def start_task():
+  global automation_status
+  if automation_status["running"]:
+    return jsonify(
+        {"status": "error", "message": "Tiến trình đang chạy rồi!"}
     )
 
-    # 3. Vòng lặp chờ mã OTP từ hộp thư Render
-    otp_code = None
-    for i in range(30):  # Chờ tối đa 3 phút (30 lần * 6 giây)
-      time.sleep(6)
-      content = get_latest_otp_or_content()
-      if content:
-        print(f"[*] Nội dung thư nhận được:\n{content}")
-        # Tại đây bạn có thể dùng Regex để lọc lấy mã OTP số (ví dụ 6 chữ số)
-        break
+  data = request.json
+  target_url = data.get(
+      "url", "https://www.vmoscloud.com/"
+  )  # Link trang đăng ký VMOS
 
-    print("[*] Hoàn thành quy trình tự động!")
+  # Chạy bằng luồng riêng (threading) để web không bị treo xoay vòng
+  t = threading.Thread(target=run_automation_task, args=(target_url,))
+  t.start()
 
-  except Exception as e:
-    print(f"[-] Lỗi trong quá trình chạy automation: {e}")
-  finally:
-    # Giữ trình duyệt mở một lúc để quan sát
-    time.sleep(10)
-    driver.quit()
+  return jsonify(
+      {"status": "success", "message": "Đã kích hoạt tiến trình tự động!"}
+  )
 
 
 if __name__ == "__main__":
-  run_vmos_automation()
+  app.run(debug=True, port=5000)
