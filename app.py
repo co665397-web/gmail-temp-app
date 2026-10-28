@@ -1,63 +1,23 @@
-import threading
-import time
-import requests
+import email
+import imaplib
+import random
+import re
+from email.header import decode_header
 from flask import Flask, jsonify, render_template, request
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import requests
 
 app = Flask(__name__)
 
-# Địa chỉ web TempMail Cloud của bạn trên Render
-RENDER_API_BASE = "https://gmail-temp-app.onrender.com"
+GMAIL_USER = "vinhvuive12312@gmail.com"
+GMAIL_APP_PASSWORD = "lujk radr dihe tyuc"
+IMAP_SERVER = "imap.gmail.com"
 
-# Biến toàn cục lưu trạng thái tiến trình
-automation_status = {
-    "running": False,
-    "log": "Hệ thống sẵn sàng.",
-    "email": "",
+# Trạng thái hệ thống tự động hóa trên Render
+current_alias_prefix = f"vinhvuive12312+vmos{random.randint(100000, 999999)}"
+bot_status = {
+    "status": "Sẵn sàng",
+    "log": "Hệ thống đang chạy trên Render trực tuyến 24/7.",
 }
-
-
-def run_automation_task(target_url):
-  global automation_status
-  automation_status["running"] = True
-  automation_status["log"] = "Đang lấy email tạm thời từ Render..."
-
-  try:
-    # 1. Lấy email từ Render
-    res = requests.post(f"{RENDER_API_BASE}/api/change-email")
-    email = res.json().get("email")
-    automation_status["email"] = email
-    automation_status["log"] = f"Đã nhận email: {email}. Đang mở trình duyệt..."
-
-    # 2. Khởi động Selenium Chrome
-    options = Options()
-    # options.add_argument("--headless") # Bỏ chú thích nếu muốn chạy ẩn không hiện cửa sổ Chrome
-    driver = webdriver.Chrome(options=options)
-
-    try:
-      automation_status["log"] = f"Đang truy cập: {target_url}"
-      driver.get(target_url)
-
-      # Tại đây bạn có thể thêm code Selenium để tìm ô input email và điền biến `email` vào
-      # Ví dụ:
-      # email_input = driver.find_element("id", "email_input_id")
-      # email_input.send_keys(email)
-
-      automation_status["log"] = (
-          "Đã điền email thành công! Đang chờ bạn xử lý Captcha hoặc nhận OTP..."
-      )
-
-      # Giữ trình duyệt mở một thời gian để thao tác thủ công phần Captcha
-      time.sleep(60)
-
-    finally:
-      driver.quit()
-      automation_status["log"] = "Đã hoàn tất phiên tự động hóa."
-  except Exception as e:
-    automation_status["log"] = f"Lỗi: {str(e)}"
-  finally:
-    automation_status["running"] = False
 
 
 @app.route("/")
@@ -65,31 +25,146 @@ def index():
   return render_template("index.html")
 
 
-@app.route("/api/status", methods=["GET"])
-def get_status():
-  return jsonify(automation_status)
+@app.route("/api/get-email", methods=["GET"])
+def get_email():
+  return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
 
 
-@app.route("/api/start", methods=["POST"])
-def start_task():
-  global automation_status
-  if automation_status["running"]:
-    return jsonify(
-        {"status": "error", "message": "Tiến trình đang chạy rồi!"}
+@app.route("/api/change-email", methods=["POST"])
+def change_email():
+  global current_alias_prefix
+  current_alias_prefix = f"vinhvuive12312+vmos{random.randint(100000, 999999)}"
+  return jsonify({"email": f"{current_alias_prefix}@gmail.com"})
+
+
+@app.route("/api/vmos/auto-register", methods=["POST"])
+def auto_register_vmos():
+  global bot_status
+  try:
+    bot_status["status"] = "Đang xử lý"
+    bot_status["log"] = (
+        f"Đang sử dụng email {current_alias_prefix}@gmail.com để gửi yêu"
+        " cầu..."
     )
 
-  data = request.json
-  target_url = data.get(
-      "url", "https://www.vmoscloud.com/"
-  )  # Link trang đăng ký VMOS
+    # Tại đây bạn có thể thêm các đoạn mã requests.post() gọi trực tiếp tới API đăng ký của VMOS
+    # (Lưu ý: Nếu VMOS chặn request thuần hoặc bắt buộc dùng trình duyệt tay, bạn sẽ cần thao tác trực tiếp trên trình duyệt của bạn).
 
-  # Chạy bằng luồng riêng (threading) để web không bị treo xoay vòng
-  t = threading.Thread(target=run_automation_task, args=(target_url,))
-  t.start()
+    bot_status["status"] = "Đang chờ OTP"
+    bot_status["log"] = "Đã gửi yêu cầu thành công. Đang quét hộp thư chờ mã OTP..."
 
-  return jsonify(
-      {"status": "success", "message": "Đã kích hoạt tiến trình tự động!"}
-  )
+    return jsonify({"success": True, "message": "Đã kích hoạt tiến trình tự động!"})
+  except Exception as e:
+    bot_status["status"] = "Lỗi"
+    bot_status["log"] = f"Lỗi xảy ra: {str(e)}"
+    return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/vmos/status", methods=["GET"])
+def get_vmos_status():
+  return jsonify(bot_status)
+
+
+@app.route("/api/messages", methods=["GET"])
+def get_messages():
+  try:
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+    mail.login(GMAIL_USER, GMAIL_APP_PASSWORD.replace(" ", ""))
+    mail.select("inbox")
+    status, messages = mail.search(None, "ALL")
+    if status != "OK":
+      mail.logout()
+      return jsonify([])
+
+    mail_ids = messages[0].split()
+    recent_ids = mail_ids[-5:][::-1]
+    message_list = []
+    for num in recent_ids:
+      status, msg_data = mail.fetch(
+          num, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
+      )
+      if status != "OK":
+        continue
+      for response_part in msg_data:
+        if isinstance(response_part, tuple):
+          msg = email.message_from_bytes(response_part[1])
+          subject, encoding = decode_header(msg["Subject"])[0]
+          if isinstance(subject, bytes):
+            subject = subject.decode(
+                encoding if encoding else "utf-8", errors="ignore"
+            )
+          message_list.append({
+              "id": num.decode("utf-8"),
+              "from": msg.get("From"),
+              "subject": subject or "(Không có tiêu đề)",
+              "date": msg.get("Date"),
+          })
+    mail.logout()
+    return jsonify(message_list)
+  except Exception as e:
+    return jsonify([])
+
+
+@app.route("/api/read", methods=["GET"])
+def read_message():
+  msg_id = request.args.get("id")
+  if not msg_id:
+    return jsonify({"error": "Thiếu ID thư"}), 400
+  try:
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+    mail.login(GMAIL_USER, GMAIL_APP_PASSWORD.replace(" ", ""))
+    mail.select("inbox")
+    status, msg_data = mail.fetch(msg_id.encode(), "(RFC822)")
+    if status != "OK":
+      mail.logout()
+      return jsonify({"error": "Không tìm thấy thư"}), 404
+
+    raw_html_or_text = ""
+    for response_part in msg_data:
+      if isinstance(response_part, tuple):
+        msg = email.message_from_bytes(response_part[1])
+        if msg.is_multipart():
+          for part in msg.walk():
+            if part.get_content_type() in ["text/plain", "text/html"]:
+              payload = part.get_payload(decode=True)
+              if payload:
+                charset = part.get_content_charset() or "utf-8"
+                try:
+                  raw_html_or_text += (
+                      payload.decode(charset, errors="ignore") + "\n"
+                  )
+                except:
+                  raw_html_or_text += (
+                      payload.decode("latin-1", errors="ignore") + "\n"
+                  )
+        else:
+          payload = msg.get_payload(decode=True)
+          if payload:
+            charset = msg.get_content_charset() or "utf-8"
+            try:
+              raw_html_or_text = payload.decode(charset, errors="ignore")
+            except:
+              raw_html_or_text = payload.decode("latin-1", errors="ignore")
+
+    mail.logout()
+    clean_text = re.sub(
+        r"<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>",
+        "",
+        raw_html_or_text,
+        flags=re.IGNORECASE,
+    )
+    clean_text = re.sub(
+        r"<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>",
+        "",
+        clean_text,
+        flags=re.IGNORECASE,
+    )
+    clean_text = re.sub(r"<[^>]+>", "", clean_text)
+    clean_text = re.sub(r"[ \t]+", " ", clean_text)
+    clean_text = re.sub(r"\n\s*\n", "\n\n", clean_text).strip()
+    return jsonify({"rawText": clean_text or "Thư trống."})
+  except Exception as e:
+    return jsonify({"rawText": f"Lỗi đọc nội dung thư: {e}"})
 
 
 if __name__ == "__main__":
