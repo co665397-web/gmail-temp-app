@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TempMail Cloud</title>
+    <title>TempMail & VMOS Cloud Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,25 +13,27 @@
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-600/30">
-                    <i class="fa-solid fa-envelope-open-text text-white text-lg"></i>
+                    <i class="fa-solid fa-cloud text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-base font-bold tracking-wide text-white">TempMail Cloud</h1>
-                    <p class="text-[11px] text-slate-400">Hệ thống nhận mã OTP & Đăng ký tự động</p>
+                    <h1 class="text-base font-bold tracking-wide text-white">Cloud Automation Hub</h1>
+                    <p class="text-[11px] text-slate-400">TempMail & Quản lý máy ảo VMOS Cloud</p>
                 </div>
             </div>
             <div class="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                Đang hoạt động 24/7
+                Trực tuyến 24/7
             </div>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Cột trái: Quản lý Email & Kích hoạt VMOS -->
         <div class="md:col-span-5 space-y-6">
+            <!-- Khung Email Tạm Thời -->
             <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50">
                 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-red-500"></i> Địa chỉ Email Ẩn Danh Của Bạn
+                    <i class="fa-solid fa-shield-halved text-red-500"></i> Email Ẩn Danh (Nhận OTP)
                 </h2>
                 <div class="flex items-center gap-2 mb-3">
                     <input type="text" id="emailInput" readonly 
@@ -48,6 +50,18 @@
                 </button>
             </div>
 
+            <!-- Khung Điều Khiển VMOS Cloud 2h -->
+            <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-mobile-screen-button text-cyan-400"></i> Quản lý Máy Ảo VMOS (2 Giờ)
+                </h2>
+                <p class="text-xs text-slate-400 mb-4">Kích hoạt hoặc làm mới phiên máy ảo cloud trên hệ thống.</p>
+                <button onclick="startVmosSession()" 
+                        class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20">
+                    <i class="fa-solid fa-play"></i> Tạo/Khởi động phiên VMOS 2h
+                </button>
+            </div>
+
             <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50 flex items-center justify-between">
                 <div>
                     <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Đồng bộ tự động</h3>
@@ -60,6 +74,7 @@
             </div>
         </div>
 
+        <!-- Cột phải: Hộp thư đến & Chi tiết thư -->
         <div class="md:col-span-7 space-y-6">
             <div class="bg-slate-800/60 backdrop-blur rounded-2xl shadow-xl border border-slate-700/50 overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/40">
@@ -116,9 +131,7 @@
                 let res = await fetch('/api/get-email');
                 let data = await res.json();
                 document.getElementById('emailInput').value = data.email;
-            } catch (err) {
-                console.error(err);
-            }
+            } catch (err) {}
         }
 
         async function changeEmailAlias() {
@@ -132,6 +145,17 @@
                 checkMessages(false);
             } catch (err) {
                 showToast("Lỗi tạo email mới!");
+            }
+        }
+
+        async function startVmosSession() {
+            try {
+                showToast("Đang gửi yêu cầu khởi tạo VMOS Cloud 2h...");
+                let res = await fetch('/api/vmos/start', { method: 'POST' });
+                let data = await res.json();
+                showToast(data.message);
+            } catch (err) {
+                showToast("Lỗi kết nối tới máy chủ VMOS!");
             }
         }
 
@@ -176,9 +200,8 @@
                         });
                     }
                 }
-            } catch (err) {
-                console.error(err);
-            } finally { 
+            } catch (err) {} 
+            finally { 
                 if (refreshIcon) refreshIcon.classList.remove('fa-spin'); 
             }
         }
