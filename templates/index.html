@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meows Cloud Phone - Nhận Máy Free</title>
+    <title>Hệ Thống Tự Động VMOS Cloud</title>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -14,7 +14,6 @@
             --text-sub: #9ca3af;
             --border: #1f293d;
         }
-        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-main);
@@ -22,7 +21,6 @@
             margin: 0;
             padding: 0;
         }
-        /* Header */
         header {
             display: flex;
             justify-content: space-between;
@@ -31,18 +29,7 @@
             background-color: var(--bg-header);
             border-bottom: 1px solid var(--border);
         }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .menu-icon { font-size: 20px; cursor: pointer; }
-        .user-avatar { width: 32px; height: 32px; background: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-        .coin-badge { background: #1f293d; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #fbbf24; }
-        
-        /* Main Container */
         .container { padding: 20px; max-width: 900px; margin: auto; }
-        .toolbar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .tool-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 14px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        .tool-btn.primary { background: var(--accent); border: none; }
-
-        /* Grid Máy Ảo */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -53,36 +40,28 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
-            position: relative;
-            min-height: 220px;
+            min-height: 200px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
-        .machine-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); align-items: center; }
         .screen-preview {
             background: #000;
             border-radius: 8px;
-            height: 120px;
+            height: 100px;
             margin: 8px 0;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             color: var(--text-sub);
-            font-size: 11px;
-            position: relative;
-            overflow: hidden;
+            font-size: 12px;
             border: 1px solid #222;
         }
-        .screen-preview img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-        
-        /* Thẻ Thêm Máy */
         .add-machine-card {
             background: var(--bg-card);
             border: 1px dashed #374151;
             border-radius: 12px;
-            height: 220px;
+            height: 200px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -95,145 +74,112 @@
             width: 45px; height: 45px; background: var(--accent); border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; margin-bottom: 8px;
         }
-
-        /* Modal */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-content {
-            background: var(--bg-card); border: 1px solid var(--border); width: 90%; max-width: 420px;
+            background: var(--bg-card); border: 1px solid var(--border); width: 90%; max-width: 400px;
             padding: 20px; border-radius: 12px; position: relative;
         }
-        .close-modal { position: absolute; top: 12px; right: 15px; cursor: pointer; color: var(--text-sub); font-size: 18px; }
-        
+        .close-modal { position: absolute; top: 12px; right: 15px; cursor: pointer; color: var::text-sub; font-size: 18px; }
         select, button { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
         select { background: var(--bg-main); color: white; }
-        .action-btn { background: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; margin-top: 15px; }
-
+        .action-btn { background: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; }
         .log-container {
             background: #030712; padding: 10px; border-radius: 6px; font-family: monospace;
-            font-size: 12px; color: #38bdf8; max-height: 140px; overflow-y: auto; margin-top: 10px; display: none;
+            font-size: 12px; color: #38bdf8; max-height: 130px; overflow-y: auto; margin-top: 10px; display: none;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-left">
-            <div class="menu-icon" onclick="alert('Mở menu danh mục hệ thống')">☰</div>
-            <div class="user-avatar">CĐ</div>
-        </div>
-        <div class="coin-badge">🪙 1025 Coin</div>
+        <div style="font-weight: bold;">Meows Cloud Automation</div>
+        <div style="background: #1f293d; padding: 4px 12px; border-radius: 20px; font-size: 13px; color: #fbbf24;">🪙 1025 Coin</div>
     </header>
 
     <div class="container">
-        <div class="toolbar">
-            <button class="tool-btn">🔲 Batch operation</button>
-            <button class="tool-btn">⚙️ Group Control</button>
-        </div>
-
+        <h3>Quản Lý Máy Ảo Tự Động</h3>
         <div class="grid" id="machineGrid">
-            <!-- Nút bấm Nhận Máy Free -->
             <div class="add-machine-card" onclick="openModal()">
                 <div class="plus-circle">+</div>
-                <div style="font-weight: 500; font-size: 14px;">Nhận Máy Free</div>
+                <div style="font-weight: 500; font-size: 14px;">Nhận Máy Free (Auto)</div>
             </div>
         </div>
     </div>
 
-    <!-- Modal chọn loại máy -->
     <div class="modal" id="vmosModal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h3 style="margin-top: 0;">Nhận Máy Free</h3>
-            <p style="font-size: 13px; color: var(--text-sub);">Cloudphone: (Chọn 1)</p>
+            <h3 style="margin-top: 0;">Trình Tự Động Hóa</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">Hệ thống sẽ mở trình duyệt ngầm truy cập VMOS:</p>
             
             <select id="cloudSelect">
-                <option value="vmos">Vmos</option>
-                <option value="vphone">Vphone</option>
-                <option value="tiksales">Tiksales</option>
+                <option value="vmos">VMOS Cloud</option>
             </select>
 
-            <button class="action-btn" id=" lấyBtn" onclick="startClaimProcess()">Lấy máy</button>
+            <button class="action-btn" id="claimBtn" onclick="runAutomation()">Bắt đầu chạy Auto</button>
             
             <div id="logBox" class="log-container"></div>
         </div>
     </div>
 
     <script>
-        function openModal() {
-            document.getElementById('vmosModal').style.display = 'flex';
-        }
-        function closeModal() {
+        function openModal() { document.getElementById('vmosModal').style.display = 'flex'; }
+        function closeModal() { 
             document.getElementById('vmosModal').style.display = 'none';
             document.getElementById('logBox').style.display = 'none';
             document.getElementById('logBox').innerHTML = '';
         }
 
-        async function startClaimProcess() {
-            const type = document.getElementById('cloudSelect').value;
+        async function runAutomation() {
             const logBox = document.getElementById('logBox');
-            const btn = document.querySelector('.action-btn');
+            const btn = document.getElementById('claimBtn');
             
             logBox.style.display = 'block';
             btn.disabled = true;
-            logBox.innerHTML = 'Đang khởi tạo email tạm thời...<br>';
-
-            await new Promise(r => setTimeout(r, 1000));
-            logBox.innerHTML += 'Đang truy cập VMOS Cloud đăng ký tài khoản tự động...<br>';
+            logBox.innerHTML = 'Đang khởi động trình duyệt tự động...<br>';
 
             try {
-                let response = await fetch('/api/get-free-machine', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: type })
-                });
-                let data = await response.json();
+                let res = await fetch('/api/auto-claim-vmos', { method: 'POST' });
+                let data = await res.json();
 
-                await new Promise(r => setTimeout(r, 1200));
-                logBox.innerHTML += `Đã tạo email: <span style="color:#fbbf24">${data.email}</span><br>`;
-                
+                logBox.innerHTML += `Đã mở trang web thành công!<br>`;
                 await new Promise(r => setTimeout(r, 1000));
-                logBox.innerHTML += 'Đang giải mã Captcha và nhận mã xác nhận...<br>';
-
-                await new Promise(r => setTimeout(r, 1200));
-                logBox.innerHTML += '<span style="color: #4ade80;">✔ Mua được máy thành công! Đang cấu hình...</span>';
+                logBox.innerHTML += `Đã tạo email: <span style="color:#fbbf24">${data.email}</span><br>`;
+                await new Promise(r => setTimeout(r, 1000));
+                logBox.innerHTML += '<span style="color: #4ade80;">✔ Hoàn tất! Đã nhận máy về tài khoản.</span>';
 
                 setTimeout(() => {
                     closeModal();
-                    location.reload(); // Tải lại trang để hiển thị máy ảo vừa nhận
+                    location.reload();
                 }, 1500);
 
             } catch (err) {
-                logBox.innerHTML += '<span style="color: #f87171;">❌ Lỗi kết nối hệ thống!</span>';
+                logBox.innerHTML += '<span style="color: #f87171;">❌ Lỗi thực thi tự động hóa!</span>';
             } finally {
                 btn.disabled = false;
             }
         }
 
-        // Tải danh sách máy ảo khi mở trang
         window.onload = async function() {
             let res = await fetch('/api/get-machines');
             let data = await res.json();
             let grid = document.getElementById('machineGrid');
             
-            // Chèn các máy đã nhận lên trước nút "Nhận máy free"
             data.machines.forEach(m => {
                 let card = document.createElement('div');
                 card.className = 'machine-item';
                 card.innerHTML = `
-                    <div class="machine-header">
-                        <span><input type="checkbox"> <b>${m.name}</b> (${m.region})</span>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub);">
+                        <span><b>${m.name}</b> (${m.region})</span>
                         <span style="color: #38bdf8;">${m.version}</span>
                     </div>
-                    <div class="screen-preview">
-                        <div style="font-size: 20px;">📱</div>
-                        <div>VMOS Cloud Android</div>
-                    </div>
+                    <div class="screen-preview">📱 Android VMOS Cloud</div>
                     <div style="font-size: 11px; color: var(--text-sub); display: flex; justify-content: space-between;">
-                        <span>Thời gian: <b style="color: #4ade80;">${m.time_left}</b></span>
-                        <span style="cursor:pointer;" onclick="navigator.clipboard.writeText('${m.share}')">📋 Copy Share</span>
+                        <span>Còn lại: <b style="color: #4ade80;">${m.time_left}</b></span>
+                        <span style="cursor:pointer; color: #38bdf8;" onclick="navigator.clipboard.writeText('${m.share}')">Copy Share</span>
                     </div>
                 `;
                 grid.insertBefore(card, grid.firstChild);
