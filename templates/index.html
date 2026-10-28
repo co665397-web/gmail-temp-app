@@ -3,268 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TempMail & VMOS Cloud Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen text-slate-100 font-sans flex flex-col">
+    <title>Meows Cloud Phone - Nhận Máy Free</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151c2c;
+            --bg-header: #111827;
+            --accent: #2563eb;
+            --text-main: #f3f4f6;
+            --text-sub: #9ca3af;
+            --border: #1f293d;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+        }
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border);
+        }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .menu-icon { font-size: 20px; cursor: pointer; }
+        .user-avatar { width: 32px; height: 32px; background: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+        .coin-badge { background: #1f293d; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #fbbf24; }
+        
+        /* Main Container */
+        .container { padding: 20px; max-width: 900px; margin: auto; }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tool-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 14px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .tool-btn.primary { background: var(--accent); border: none; }
 
-    <header class="bg-slate-900/85 backdrop-blur border-b border-slate-800 sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-600/30">
-                    <i class="fa-solid fa-envelope-open-text text-white text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-bold tracking-wide text-white">TempMail & VMOS Cloud</h1>
-                    <p class="text-[11px] text-slate-400">Hệ thống nhận mã OTP & Quản lý tự động</p>
-                </div>
-            </div>
-            <div class="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                Đang hoạt động 24/7
-            </div>
+        /* Grid Máy Ảo */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
+        }
+        .machine-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            position: relative;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .machine-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-sub); align-items: center; }
+        .screen-preview {
+            background: #000;
+            border-radius: 8px;
+            height: 120px;
+            margin: 8px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 11px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+        .screen-preview img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        
+        /* Thẻ Thêm Máy */
+        .add-machine-card {
+            background: var(--bg-card);
+            border: 1px dashed #374151;
+            border-radius: 12px;
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .add-machine-card:hover { border-color: var(--accent); }
+        .plus-circle {
+            width: 45px; height: 45px; background: var(--accent); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; margin-bottom: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-content {
+            background: var(--bg-card); border: 1px solid var(--border); width: 90%; max-width: 420px;
+            padding: 20px; border-radius: 12px; position: relative;
+        }
+        .close-modal { position: absolute; top: 12px; right: 15px; cursor: pointer; color: var(--text-sub); font-size: 18px; }
+        
+        select, button { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
+        select { background: var(--bg-main); color: white; }
+        .action-btn { background: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; margin-top: 15px; }
+
+        .log-container {
+            background: #030712; padding: 10px; border-radius: 6px; font-family: monospace;
+            font-size: 12px; color: #38bdf8; max-height: 140px; overflow-y: auto; margin-top: 10px; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="menu-icon" onclick="alert('Mở menu danh mục hệ thống')">☰</div>
+            <div class="user-avatar">CĐ</div>
         </div>
+        <div class="coin-badge">🪙 1025 Coin</div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-12 gap-6">
-        <!-- Cột trái: Quản lý Email & Trạng thái -->
-        <div class="md:col-span-5 space-y-6">
-            <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50">
-                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-red-500"></i> Địa chỉ Email Của Bạn
-                </h2>
-                <div class="flex items-center gap-2 mb-3">
-                    <input type="text" id="emailInput" readonly 
-                           class="w-full bg-slate-900/90 text-red-400 font-mono font-semibold text-xs px-3.5 py-3 rounded-xl border border-slate-700 focus:outline-none select-all shadow-inner" 
-                           value="Đang kết nối...">
-                    <button onclick="copyEmail()" title="Sao chép"
-                            class="bg-red-600 hover:bg-red-500 text-white p-3 rounded-xl font-medium transition shadow-lg shadow-red-600/20 flex items-center justify-center min-w-[44px]">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>
-                <button onclick="changeEmailAlias()" 
-                        class="w-full bg-slate-700/60 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 border border-slate-600/50 shadow-sm group">
-                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 group-hover:rotate-12 transition-transform"></i> Tạo email ngẫu nhiên mới ngay
-                </button>
-            </div>
-
-            <!-- Nút bắt đầu tiến trình -->
-            <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50 space-y-3">
-                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-cyan-400"></i> Tiến trình VMOS
-                </h2>
-                <button onclick="startVmosProcess()" 
-                        class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30">
-                    <i class="fa-solid fa-play"></i> Bắt đầu kết nối phiên VMOS
-                </button>
-                <div id="statusLog" class="bg-slate-900 p-3 rounded-xl text-[11px] font-mono text-slate-300 border border-slate-700">
-                    Trạng thái: Sẵn sàng.
-                </div>
-            </div>
-
-            <div class="bg-slate-800/60 backdrop-blur rounded-2xl p-5 shadow-xl border border-slate-700/50 flex items-center justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Đồng bộ tự động</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Làm mới sau <span id="timerText" class="font-bold text-red-400">5</span> giây</p>
-                </div>
-                <button onclick="checkMessages(true)" 
-                        class="bg-slate-700/60 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition border border-slate-600/50 flex items-center gap-2">
-                    <i class="fa-solid fa-rotate" id="refreshIcon"></i> Quét ngay
-                </button>
-            </div>
+    <div class="container">
+        <div class="toolbar">
+            <button class="tool-btn">🔲 Batch operation</button>
+            <button class="tool-btn">⚙️ Group Control</button>
         </div>
 
-        <!-- Cột phải: Hộp thư đến -->
-        <div class="md:col-span-7 space-y-6">
-            <div class="bg-slate-800/60 backdrop-blur rounded-2xl shadow-xl border border-slate-700/50 overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/40">
-                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-inbox text-red-500"></i> Hộp Thư Đến 
-                        <span id="msgCount" class="bg-red-500/20 text-red-400 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-500/30">0</span>
-                    </h2>
-                </div>
-                <div id="messagesList" class="divide-y divide-slate-700/40 max-h-[280px] overflow-y-auto">
-                    <div class="p-8 text-center text-slate-400">
-                        <i class="fa-solid fa-spinner fa-spin text-2xl text-red-500 mb-2"></i>
-                        <p class="text-xs">Đang tải hộp thư...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="detailBox" class="bg-slate-800/60 backdrop-blur rounded-2xl shadow-xl border border-slate-700/50 p-5 hidden">
-                <div class="flex justify-between items-start border-b border-slate-700/50 pb-3 mb-4">
-                    <div class="overflow-hidden pr-2">
-                        <h3 id="detailSubject" class="font-bold text-slate-100 text-sm mb-1 truncate">Tiêu đề</h3>
-                        <p class="text-xs text-slate-400">Từ: <span id="detailFrom" class="font-medium text-slate-300"></span></p>
-                    </div>
-                    <button onclick="closeDetail()" class="text-slate-400 hover:text-white p-1 transition">
-                        <i class="fa-solid fa-xmark text-lg"></i>
-                    </button>
-                </div>
-                <div class="relative">
-                    <textarea id="mailContentBox" readonly 
-                              class="w-full h-[220px] p-3.5 text-xs font-mono bg-slate-900 text-slate-200 border border-slate-700 rounded-xl focus:outline-none select-all shadow-inner"
-                              placeholder="Đang tải nội dung văn bản..."></textarea>
-                </div>
+        <div class="grid" id="machineGrid">
+            <!-- Nút bấm Nhận Máy Free -->
+            <div class="add-machine-card" onclick="openModal()">
+                <div class="plus-circle">+</div>
+                <div style="font-weight: 500; font-size: 14px;">Nhận Máy Free</div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-slate-700 text-slate-100 text-xs px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2.5 pointer-events-none z-50">
-        <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-        <span id="toastMsg">Thông báo</span>
+    <!-- Modal chọn loại máy -->
+    <div class="modal" id="vmosModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 style="margin-top: 0;">Nhận Máy Free</h3>
+            <p style="font-size: 13px; color: var(--text-sub);">Cloudphone: (Chọn 1)</p>
+            
+            <select id="cloudSelect">
+                <option value="vmos">Vmos</option>
+                <option value="vphone">Vphone</option>
+                <option value="tiksales">Tiksales</option>
+            </select>
+
+            <button class="action-btn" id=" lấyBtn" onclick="startClaimProcess()">Lấy máy</button>
+            
+            <div id="logBox" class="log-container"></div>
+        </div>
     </div>
 
     <script>
-        let countdown = 5;
-        let autoRefreshTimer = null;
-        let activeMsgId = null;
-
-        window.addEventListener('DOMContentLoaded', () => {
-            fetchEmail();
-            checkMessages(true);
-            startAutoRefresh();
-        });
-
-        async function fetchEmail() {
-            try {
-                let res = await fetch('/api/get-email');
-                let data = await res.json();
-                document.getElementById('emailInput').value = data.email;
-            } catch (err) {}
+        function openModal() {
+            document.getElementById('vmosModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('vmosModal').style.display = 'none';
+            document.getElementById('logBox').style.display = 'none';
+            document.getElementById('logBox').innerHTML = '';
         }
 
-        async function changeEmailAlias() {
-            try {
-                document.getElementById('emailInput').value = "Đang tạo email mới...";
-                let res = await fetch('/api/change-email', { method: 'POST' });
-                let data = await res.json();
-                document.getElementById('emailInput').value = data.email;
-                showToast("Đã tạo email bảo mật mới thành công!");
-                closeDetail();
-                checkMessages(false);
-            } catch (err) {
-                showToast("Lỗi tạo email mới!");
-            }
-        }
+        async function startClaimProcess() {
+            const type = document.getElementById('cloudSelect').value;
+            const logBox = document.getElementById('logBox');
+            const btn = document.querySelector('.action-btn');
+            
+            logBox.style.display = 'block';
+            btn.disabled = true;
+            logBox.innerHTML = 'Đang khởi tạo email tạm thời...<br>';
 
-        async function startVmosProcess() {
+            await new Promise(r => setTimeout(r, 1000));
+            logBox.innerHTML += 'Đang truy cập VMOS Cloud đăng ký tài khoản tự động...<br>';
+
             try {
-                showToast("Đang gửi yêu cầu khởi tạo...");
-                let res = await fetch('/api/vmos/start', { method: 'POST' });
-                let data = await res.json();
-                showToast(data.message);
+                let response = await fetch('/api/get-free-machine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: type })
+                });
+                let data = await response.json();
+
+                await new Promise(r => setTimeout(r, 1200));
+                logBox.innerHTML += `Đã tạo email: <span style="color:#fbbf24">${data.email}</span><br>`;
                 
-                let statusRes = await fetch('/api/vmos/status');
-                let statusData = await statusRes.json();
-                document.getElementById('statusLog').innerText = "Trạng thái: " + statusData.log;
+                await new Promise(r => setTimeout(r, 1000));
+                logBox.innerHTML += 'Đang giải mã Captcha và nhận mã xác nhận...<br>';
+
+                await new Promise(r => setTimeout(r, 1200));
+                logBox.innerHTML += '<span style="color: #4ade80;">✔ Mua được máy thành công! Đang cấu hình...</span>';
+
+                setTimeout(() => {
+                    closeModal();
+                    location.reload(); // Tải lại trang để hiển thị máy ảo vừa nhận
+                }, 1500);
+
             } catch (err) {
-                showToast("Lỗi kết nối máy chủ!");
+                logBox.innerHTML += '<span style="color: #f87171;">❌ Lỗi kết nối hệ thống!</span>';
+            } finally {
+                btn.disabled = false;
             }
         }
 
-        function copyEmail() {
-            let val = document.getElementById('emailInput').value;
-            navigator.clipboard.writeText(val);
-            showToast("Đã sao chép địa chỉ email!");
-        }
-
-        async function checkMessages(showLoading = false) {
-            let listContainer = document.getElementById('messagesList');
-            let refreshIcon = document.getElementById('refreshIcon');
-            if (refreshIcon) refreshIcon.classList.add('fa-spin');
-
-            if (showLoading && listContainer) {
-                listContainer.innerHTML = `<div class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl text-red-500 mb-2"></i><p class="text-xs">Đang quét hộp thư...</p></div>`;
-            }
-
-            try {
-                let res = await fetch('/api/messages');
-                let messages = await res.json();
-                let msgCountElem = document.getElementById('msgCount');
-                if (msgCountElem) msgCountElem.innerText = messages.length;
-
-                if (listContainer) {
-                    if (!messages || messages.length === 0) {
-                        listContainer.innerHTML = `<div class="p-8 text-center text-slate-400"><i class="fa-regular fa-folder-open text-2xl mb-2"></i><p class="text-xs">Hộp thư đang trống.</p></div>`;
-                    } else {
-                        listContainer.innerHTML = '';
-                        messages.forEach(msg => {
-                            let item = document.createElement('div');
-                            item.className = `p-3.5 hover:bg-slate-700/40 cursor-pointer transition flex justify-between items-center ${activeMsgId === msg.id ? 'bg-red-500/10 border-l-4 border-red-500' : ''}`;
-                            item.onclick = () => readMessage(msg.id, msg.subject, msg.from);
-                            item.innerHTML = `
-                                <div class="overflow-hidden pr-2">
-                                    <p class="text-xs font-semibold text-slate-200 truncate">${escapeHtml(msg.from)}</p>
-                                    <p class="text-xs text-slate-400 truncate font-medium mt-0.5">${escapeHtml(msg.subject)}</p>
-                                </div>
-                                <span class="text-[10px] text-slate-500 whitespace-nowrap">${msg.date ? msg.date.slice(0, 16) : ''}</span>
-                            `;
-                            listContainer.appendChild(item);
-                        });
-                    }
-                }
-            } catch (err) {} 
-            finally { 
-                if (refreshIcon) refreshIcon.classList.remove('fa-spin'); 
-            }
-        }
-
-        async function readMessage(id, subject, from) {
-            activeMsgId = id;
-            let detailBox = document.getElementById('detailBox');
-            if(detailBox) detailBox.classList.remove('hidden');
+        // Tải danh sách máy ảo khi mở trang
+        window.onload = async function() {
+            let res = await fetch('/api/get-machines');
+            let data = await res.json();
+            let grid = document.getElementById('machineGrid');
             
-            let subElem = document.getElementById('detailSubject');
-            let fromElem = document.getElementById('detailFrom');
-            let contentBox = document.getElementById('mailContentBox');
-            
-            if(subElem) subElem.innerText = subject;
-            if(fromElem) fromElem.innerText = from;
-            if(contentBox) contentBox.value = "Đang tải nội dung văn bản...";
-            
-            try {
-                let res = await fetch(`/api/read?id=${id}`);
-                let data = await res.json();
-                if(contentBox) contentBox.value = data.rawText || "Không có nội dung";
-            } catch (err) { 
-                if(contentBox) contentBox.value = "Lỗi tải nội dung thư!";
-            }
-        }
-
-        function closeDetail() {
-            let detailBox = document.getElementById('detailBox');
-            if(detailBox) detailBox.classList.add('hidden');
-            activeMsgId = null;
-        }
-
-        function startAutoRefresh() {
-            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-            autoRefreshTimer = setInterval(() => {
-                countdown--;
-                let timerText = document.getElementById('timerText');
-                if (timerText) timerText.innerText = countdown;
-                if (countdown <= 0) { 
-                    countdown = 5; 
-                    checkMessages(false); 
-                }
-            }, 1000);
-        }
-
-        function showToast(message) {
-            let toast = document.getElementById('toast');
-            let toastMsg = document.getElementById('toastMsg');
-            if (toast && toastMsg) {
-                toastMsg.innerText = message;
-                toast.classList.remove('translate-y-20', 'opacity-0');
-                setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-            }
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            // Chèn các máy đã nhận lên trước nút "Nhận máy free"
+            data.machines.forEach(m => {
+                let card = document.createElement('div');
+                card.className = 'machine-item';
+                card.innerHTML = `
+                    <div class="machine-header">
+                        <span><input type="checkbox"> <b>${m.name}</b> (${m.region})</span>
+                        <span style="color: #38bdf8;">${m.version}</span>
+                    </div>
+                    <div class="screen-preview">
+                        <div style="font-size: 20px;">📱</div>
+                        <div>VMOS Cloud Android</div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-sub); display: flex; justify-content: space-between;">
+                        <span>Thời gian: <b style="color: #4ade80;">${m.time_left}</b></span>
+                        <span style="cursor:pointer;" onclick="navigator.clipboard.writeText('${m.share}')">📋 Copy Share</span>
+                    </div>
+                `;
+                grid.insertBefore(card, grid.firstChild);
+            });
         }
     </script>
 </body>
