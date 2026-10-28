@@ -3,46 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VMOS Automation Dashboard</title>
+    <title>VMOS Automation Control Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-900 min-h-screen text-slate-100 font-sans flex items-center justify-center p-4">
 
-    <div class="max-w-lg w-full bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-6">
-        <div class="flex items-center space-x-3 border-b border-slate-700 pb-4">
-            <div class="bg-red-600 p-3 rounded-xl shadow-lg">
+    <div class="max-w-md w-full bg-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-700 space-y-5">
+        <div class="flex items-center space-x-3 border-b border-slate-700 pb-3">
+            <div class="bg-cyan-600 p-3 rounded-xl shadow-lg">
                 <i class="fa-solid fa-robot text-white text-xl"></i>
             </div>
             <div>
-                <h1 class="text-base font-bold text-white">Trạm Điều Khởi VMOS Automation</h1>
-                <p class="text-xs text-slate-400">Tự động lấy email từ Render & Điều khiển trình duyệt</p>
+                <h1 class="text-sm font-bold text-white">VMOS Auto Registration Hub</h1>
+                <p class="text-[11px] text-slate-400">Tự động hóa qua Email vinhvuive12312@gmail.com</p>
             </div>
         </div>
 
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Đường dẫn trang VMOS mục tiêu:</label>
-                <input type="text" id="targetUrl" value="https://www.vmoscloud.com/" 
-                       class="w-full bg-slate-900 text-xs px-3.5 py-3 rounded-xl border border-slate-700 text-slate-200 focus:outline-none">
-            </div>
-
-            <button onclick="startAutomation()" id="startBtn"
-                    class="w-full bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
-                <i class="fa-solid fa-play"></i> Bắt đầu tiến trình tự động
-            </button>
-        </div>
+        <button onclick="startBot()" 
+                class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play"></i> Bắt đầu tự động lấy máy VMOS 2h
+        </button>
 
         <div class="bg-slate-900 rounded-xl p-4 border border-slate-700 space-y-2">
             <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-400">Email hiện tại:</span>
-                <span id="currentEmail" class="text-xs font-mono text-red-400 font-semibold">---</span>
+                <span class="text-xs text-slate-400">Email đang dùng:</span>
+                <span id="emailText" class="text-xs font-mono text-cyan-400 font-semibold">---</span>
             </div>
             <div>
-                <span class="text-xs text-slate-400 block mb-1">Nhật ký hoạt động (Logs):</span>
-                <div id="logBox" class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-emerald-400 h-28 overflow-y-auto border border-slate-800">
-                    Đang chờ khởi chạy...
+                <span class="text-xs text-slate-400 block mb-1">Nhật ký tiến trình:</span>
+                <div id="logBox" class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-emerald-400 h-24 overflow-y-auto border border-slate-800">
+                    Đang chờ kích hoạt...
                 </div>
+            </div>
+        </div>
+
+        <!-- Khung hiển thị Captcha kéo trượt nếu hệ thống yêu cầu xác thực thủ công -->
+        <div id="captchaBox" class="bg-slate-900/90 border border-amber-500/40 p-4 rounded-xl hidden space-y-3">
+            <h3 class="text-xs font-bold text-amber-400 flex items-center gap-2">
+                <i class="fa-solid fa-puzzle-piece"></i> Yêu cầu xác thực Captcha kéo trượt
+            </h3>
+            <div class="bg-slate-950 p-2 rounded-lg text-center border border-slate-800">
+                <img id="captchaImg" src="" alt="Captcha Image" class="mx-auto rounded max-h-[100px] object-contain">
+            </div>
+            <div class="relative w-full bg-slate-800 h-9 rounded-lg flex items-center px-2 border border-slate-700">
+                <span class="text-[10px] text-slate-400 absolute inset-0 flex items-center justify-center pointer-events-none">Kéo trượt thanh bên dưới để xác thực</span>
+                <input type="range" id="slideInput" min="0" max="300" value="0" 
+                       class="w-full accent-cyan-500 cursor-pointer z-10 opacity-80 hover:opacity-100"
+                       onchange="submitCaptcha(this.value)">
             </div>
         </div>
     </div>
@@ -52,13 +60,8 @@
             setInterval(fetchStatus, 2000);
         });
 
-        async function startAutomation() {
-            let url = document.getElementById('targetUrl').value;
-            let res = await fetch('/api/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url })
-            });
+        async function startBot() {
+            let res = await fetch('/api/start', { method: 'POST' });
             let data = await res.json();
             alert(data.message);
         }
@@ -67,13 +70,33 @@
             try {
                 let res = await fetch('/api/status');
                 let data = await res.json();
-                document.getElementById('currentEmail').innerText = data.email || "---";
+                
+                document.getElementById('emailText').innerText = data.email || "---";
                 let logBox = document.getElementById('logBox');
                 if(logBox.innerText !== data.log) {
                     logBox.innerText = data.log;
                     logBox.scrollTop = logBox.scrollHeight;
                 }
+
+                // Hiển thị khung Captcha nếu hệ thống kẹt lại
+                let captchaBox = document.getElementById('captchaBox');
+                if (data.requires_captcha) {
+                    captchaBox.classList.remove('hidden');
+                    document.getElementById('captchaImg').src = data.captcha_img;
+                } else {
+                    captchaBox.classList.add('hidden');
+                }
             } catch(e) {}
+        }
+
+        async function submitCaptcha(offset) {
+            let res = await fetch('/api/solve-captcha', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ offset: offset })
+            });
+            let data = await res.json();
+            alert(data.message);
         }
     </script>
 </body>
